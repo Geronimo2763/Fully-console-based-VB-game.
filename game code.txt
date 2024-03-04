@@ -1,0 +1,335 @@
+Module Module1
+
+    Class BasePerson
+        Public Health As Integer
+        Public MaxHealth As Integer
+        Public Attack As Integer
+        Public Defence As Double
+        Public Value As Integer
+        Public Heal As Integer
+        Public isDefended As Boolean
+
+        Public Name As String
+
+
+        Public Overrides Function ToString() As String
+            Return $"{Name}: [{vbNewLine}Health: {Health},{vbNewLine}Attack: {Attack},{vbNewLine}Max Health: {MaxHealth},{vbNewLine}Defence: {Defence},{vbNewLine}isDefending: {isDefended},{vbNewLine}Heal: {Heal}{vbNewLine}]{vbNewLine}"
+        End Function
+
+
+    End Class
+
+    Class BasicKnight
+        Inherits BasePerson
+        Sub New()
+            Health = 5
+            Value = 1
+            MaxHealth = 5
+            Attack = 2
+            isDefended = False
+            Defence = 0.3
+            Heal = 2
+            Name = "Basic Knight"
+
+        End Sub
+
+    End Class
+
+    Class TrainedSoldier
+        Inherits BasePerson
+
+        Sub New()
+            Health = 7
+            MaxHealth = 7
+            Value = 2
+            Attack = 3
+            isDefended = False
+            Defence = 0.45
+            Heal = 3
+            Name = "Trained Soldier"
+        End Sub
+    End Class
+
+    Class LegendaryWarrior
+        Inherits BasePerson
+
+        Sub New()
+            Health = 10
+            MaxHealth = 10
+            Value = 3
+            Attack = 4
+            isDefended = False
+            Defence = 0.6
+            Heal = 5
+            Name = "Legendary Warrior"
+        End Sub
+
+    End Class
+
+    Class Player
+        Public cards As New ArrayList()
+        Public coins As Integer
+        Public rating As Integer
+
+        Sub updateRating()
+            For Each card In cards
+                rating += card.value
+            Next
+        End Sub
+
+        Sub fight(ByVal Opp As Opponent)
+            Dim playerCard As Object = cards((cards.Count - 1))
+            Dim oppCard As Object
+            Dim playerChoice As String
+            Dim opponentChoice As Integer
+
+            updateRating()
+            If Opp.cards.Count < 1 Then
+                Opp.addRandomCard(rating)
+
+            End If
+            oppCard = Opp.cards((cards.Count - 1))
+
+            Console.Write("Player 1, select an action: attack, defend, heal. (a/d/h): ")
+            playerChoice = Console.ReadLine().ToLower
+            Select Case playerChoice
+                Case "a"
+                    If oppCard.isDefended = False Then
+                        oppCard.health -= playerCard.attack
+
+                    Else
+                        oppCard.health -= Math.Floor(playerCard.attack * oppCard.Defence)
+                        oppCard.isDefending = False
+                    End If
+                Case "d"
+                    playerCard.isDefended = True
+                Case "h"
+                    If playerCard.health + playerCard.heal > playerCard.health Then
+                        playerCard.Health = playerCard.MaxHealth
+                    Else
+                        playerCard.health += playerCard.heal
+                    End If
+            End Select
+
+            Console.WriteLine()
+            showCards(cards.IndexOf(playerCard))
+            Opp.showCards(Opp.cards.IndexOf(oppCard))
+
+            Randomize()
+            opponentChoice = CInt(Math.Floor((Rnd() * 3) + 1))
+
+            Select Case opponentChoice
+                Case 1
+                    Console.WriteLine("Opponent chose attack.")
+                Case 2
+                    Console.WriteLine("Opponent chose defence.")
+                Case 3
+                    Console.WriteLine("Opponent chose heal")
+            End Select
+
+            Select Case opponentChoice
+                Case 1
+                    If playerCard.isDefended = False Then
+                        playerCard.health -= oppCard.attack
+
+                    Else
+                        playerCard.health -= Math.Floor(oppCard.attack * oppCard.Defence)
+                        playerCard.isDefending = False
+                    End If
+                Case 2
+                    playerCard.isDefended = True
+                Case 3
+                    If oppCard.health + oppCard.heal > oppCard.health Then
+                        oppCard.Health = oppCard.MaxHealth
+                    Else
+                        oppCard.health += oppCard.heal
+                    End If
+            End Select
+            showCards(cards.IndexOf(playerCard))
+            Opp.showCards(Opp.cards.IndexOf(oppCard))
+        End Sub
+
+
+        Sub showCards(Optional ByVal index = -1)
+            If index = -1 Then
+                For Each card In cards
+                    Console.WriteLine(card)
+                Next
+            Else
+                Console.WriteLine(cards(index))
+            End If
+
+        End Sub
+
+    End Class
+
+    Class Opponent
+        Inherits Player
+
+
+        Sub addRandomCard(ByVal rating As Integer)
+            Dim randomCard As Integer
+            Randomize()
+            randomCard = CInt(Math.Floor((Rnd() * 5) + 1))
+            If rating < 6 Then
+                If randomCard <= 2 Then
+                    cards.Add(New BasicKnight())
+                ElseIf 2 < randomCard <= 4 Then
+                    cards.Add(New TrainedSoldier())
+                ElseIf 4 < randomCard <= 5 Then
+                    cards.Add(New LegendaryWarrior())
+                End If
+
+            Else
+                If randomCard <= 1 Then
+                    cards.Add(New BasicKnight())
+                ElseIf 1 < randomCard <= 3 Then
+                    cards.Add(New TrainedSoldier())
+                ElseIf 3 < randomCard <= 5 Then
+                    cards.Add(New LegendaryWarrior())
+                End If
+            End If
+
+
+        End Sub
+    End Class
+
+    Sub startAnimation(ByVal title As String, Optional ByVal bgColor As ConsoleColor = ConsoleColor.Black, Optional ByVal fgColor As ConsoleColor = ConsoleColor.White)
+        Const Delay As Double = 45
+        Console.BackgroundColor = bgColor
+        Console.ForegroundColor = fgColor
+        For i As Integer = 0 To 21
+            For j As Integer = 0 To i
+                Console.WriteLine()
+            Next
+            Console.Write(title)
+            Threading.Thread.Sleep(Delay)
+
+            Console.Clear()
+        Next
+
+        For i As Integer = 0 To 20
+            For j As Integer = 0 To 19 - i
+                Console.WriteLine()
+            Next
+            Console.Write(title)
+            Threading.Thread.Sleep(Delay)
+            If Not i = 20 Then
+                Console.Clear()
+            End If
+        Next
+        Console.WriteLine()
+    End Sub
+    Sub startButton(ByVal selected As Boolean, Optional ByVal bgColor As ConsoleColor = ConsoleColor.Black, Optional ByVal fgColor As ConsoleColor = ConsoleColor.White)
+        Dim button As String = "                                                    __                    __ 
+                                            _____  / /_  ____ _   _____  / /_
+                                           / ___/ / __/ / __ `/  / ___/ / __/
+                                          (__  ) / /_  / /_/ /  / /    / /_  
+                                         /____/  \__/  \__,_/  /_/     \__/  "
+        If selected Then
+            button = "                                        -------------------------------------
+                                       |            __                    __ |
+                                       |    _____  / /_  ____ _   _____  / /_|
+                                       |   / ___/ / __/ / __ `/  / ___/ / __/|
+                                       |  (__  ) / /_  / /_/ /  / /    / /_  |
+                                       | /____/  \__/  \__,_/  /_/     \__/  |
+                                       |                                     |
+                                        -------------------------------------"
+        End If
+        Console.BackgroundColor = bgColor
+        Console.ForegroundColor = fgColor
+        Console.WriteLine(button)
+
+    End Sub
+    Sub endButton(ByVal selected As Boolean, Optional ByVal bgColor As ConsoleColor = ConsoleColor.Black, Optional ByVal fgColor As ConsoleColor = ConsoleColor.White)
+        Dim button As String = "                                                                     __
+                                                  ___    ____   ____/ /
+                                                 / _ \  / __ \ / __  / 
+                                                /  __/ / / / // /_/ /  
+                                                \___/ /_/ /_/ \__,_/    "
+        If selected Then
+            button = "                                               -------------------------
+                                              |                      __	|
+                                              |   ___    ____   ____/ /	|
+                                              |  / _ \  / __ \ / __  / 	|
+                                              | /  __/ / / / // /_/ /  	|
+                                              | \___/ /_/ /_/ \__,_/    |
+                                              |                         |
+                                               ------------------------- "
+        End If
+        Console.BackgroundColor = bgColor
+        Console.ForegroundColor = fgColor
+        Console.WriteLine(button)
+    End Sub
+    Sub startMenu()
+        Const title As String = "       █     █░ ▄▄▄       ██▀███       ██████  ██▓ ███▄ ▄███▓ █    ██  ██▓    ▄▄▄     ▄▄▄█████▓ ▒█████   ██▀███  
+       ▓█░ █ ░█░▒████▄    ▓██ ▒ ██▒   ▒██    ▒ ▓██▒▓██▒▀█▀ ██▒ ██  ▓██▒▓██▒   ▒████▄   ▓  ██▒ ▓▒▒██▒  ██▒▓██ ▒ ██▒
+       ▒█░ █ ░█ ▒██  ▀█▄  ▓██ ░▄█ ▒   ░ ▓██▄   ▒██▒▓██    ▓██░▓██  ▒██░▒██░   ▒██  ▀█▄ ▒ ▓██░ ▒░▒██░  ██▒▓██ ░▄█ ▒
+       ░█░ █ ░█ ░██▄▄▄▄██ ▒██▀▀█▄       ▒   ██▒░██░▒██    ▒██ ▓▓█  ░██░▒██░   ░██▄▄▄▄██░ ▓██▓ ░ ▒██   ██░▒██▀▀█▄  
+       ░░██▒██▓  ▓█   ▓██▒░██▓ ▒██▒   ▒██████▒▒░██░▒██▒   ░██▒▒▒█████▓ ░██████▒▓█   ▓██▒ ▒██▒ ░ ░ ████▓▒░░██▓ ▒██▒
+       ░ ▓░▒ ▒   ▒▒   ▓▒█░░ ▒▓ ░▒▓░   ▒ ▒▓▒ ▒ ░░▓  ░ ▒░   ░  ░░▒▓▒ ▒ ▒ ░ ▒░▓  ░▒▒   ▓▒█░ ▒ ░░   ░ ▒░▒░▒░ ░ ▒▓ ░▒▓░
+         ▒ ░ ░    ▒   ▒▒ ░  ░▒ ░ ▒░   ░ ░▒  ░ ░ ▒ ░░  ░      ░░░▒░ ░ ░ ░ ░ ▒  ░ ▒   ▒▒ ░   ░      ░ ▒ ▒░   ░▒ ░ ▒░
+         ░   ░    ░   ▒     ░░   ░    ░  ░  ░   ▒ ░░      ░    ░░░ ░ ░   ░ ░    ░   ▒    ░      ░ ░ ░ ▒    ░░   ░ 
+           ░          ░  ░   ░              ░   ░         ░      ░         ░  ░     ░  ░            ░ ░     ░     "
+        Dim input As String
+        Dim inputY As Integer = 1
+        Const bg As ConsoleColor = ConsoleColor.Black
+        Dim fg As ConsoleColor = ConsoleColor.DarkCyan
+        Dim buttonGap As Integer = 3
+
+        startAnimation(title, fgColor:=ConsoleColor.DarkRed)
+        startButton(True, bg, fg)
+        For lineNum As Integer = 0 To buttonGap
+            Console.WriteLine()
+        Next
+        endButton(False, bg, fg)
+        While True
+            input = Console.ReadKey(True).Key
+            If input = 38 Then
+                inputY = 1
+            ElseIf input = 40 Then
+                inputY = 0
+            ElseIf input = 13 Then
+                If inputY = 0 Then
+                    End
+                ElseIf inputY = 1 Then
+                    '
+                End If
+
+            End If
+
+            Console.Clear()
+            Console.ForegroundColor = ConsoleColor.DarkRed
+            Console.WriteLine(title)
+
+            If inputY = 1 Then
+                startButton(True, bg, fg)
+                For lineNum As Integer = 0 To buttonGap
+                    Console.WriteLine()
+                Next
+                endButton(False, bg, fg)
+            ElseIf inputY = 0 Then
+                startButton(False, bg, fg)
+                For lineNum As Integer = 0 To buttonGap
+                    Console.WriteLine()
+                Next
+                endButton(True, bg, fg)
+            End If
+
+
+        End While
+    End Sub
+
+
+    Sub Main()
+        Dim player1 As New Player()
+        Dim Opp1 As New Opponent()
+        Dim card1N As String
+
+        startMenu()
+
+
+        Console.ReadLine()
+    End Sub
+
+End Module
