@@ -21,6 +21,7 @@ Module Module1
 
     Class BasicKnight
         Inherits BasePerson
+
         Sub New()
             Health = 5
             Value = 1
@@ -277,7 +278,7 @@ Module Module1
         Dim fg As ConsoleColor = ConsoleColor.DarkCyan
         Dim buttonGap As Integer = 3
 
-        startAnimation(title, fgColor:=ConsoleColor.DarkRed)
+        'startAnimation(title, fgColor:=ConsoleColor.DarkRed)
         startButton(True, bg, fg)
         For lineNum As Integer = 0 To buttonGap
             Console.WriteLine()
@@ -293,7 +294,7 @@ Module Module1
                 If inputY = 0 Then
                     End
                 ElseIf inputY = 1 Then
-                    '
+                    Exit While
                 End If
 
             End If
@@ -324,9 +325,28 @@ Module Module1
     Sub Main()
         Dim player1 As New Player()
         Dim Opp1 As New Opponent()
-        Dim card1N As String
+        Dim cardN As String
+        Dim move As String
 
         startMenu()
+        Console.Clear()
+        Console.BackgroundColor = ConsoleColor.Black
+        Console.ForegroundColor = ConsoleColor.White
+        Console.Write($"Pick a card (K,S,W): ")
+        cardN = Console.ReadLine().ToLower
+        Select Case cardN
+            Case "k"
+                player1.cards.Add(New BasicKnight())
+            Case "s"
+                player1.cards.Add(New TrainedSoldier())
+            Case "w"
+                player1.cards.Add(New LegendaryWarrior())
+        End Select
+        Opp1.addRandomCard(player1.rating)
+
+        Console.Write("Enter move (A,D,H): ")
+        move = Console.ReadLine()
+        player1.fight(Opp1)
 
 
         Console.ReadLine()
