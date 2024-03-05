@@ -86,7 +86,8 @@ Module Module1
             Dim playerCard As Object = cards((cards.Count - 1))
             Dim oppCard As Object
             Dim playerChoice As String
-            Dim opponentChoice As Integer
+            Dim opponentChoice As String
+            Dim opponentOptions As New List(Of String)
 
             updateRating()
             If Opp.cards.Count < 1 Then
@@ -149,25 +150,33 @@ Module Module1
                 playerCard.ShowStats()
 
                 Console.ReadLine()
-                Randomize()
-                opponentChoice = CInt(Math.Floor((Rnd() * 3) + 1))
-                If oppCard.Health = oppCard.MaxHealth Then
-                    Randomize()
-                    opponentChoice = CInt(Math.Floor((Rnd() * 2) + 1))
+
+                opponentOptions.Clear()
+
+                If oppCard.Health > Math.Floor(oppCard.MaxHealth * 0.5) Then
+                    Console.WriteLine("Health is more than half health")
+                    opponentOptions.Add("a")
+
+                Else
+                    opponentOptions.Add("h")
+                    Console.WriteLine("Health is less than  half health")
 
                 End If
+                If oppCard.isDefending = False Then
+                    opponentOptions.Add("d")
+                End If
+
+
+                Randomize()
+                opponentChoice = opponentOptions(CInt(Math.Floor((Rnd() * opponentOptions.Count) + 0)))
+
+
+
                 Console.WriteLine()
-                Select Case opponentChoice
-                    Case 1
-                        Console.WriteLine("Opponent chose attack.")
-                    Case 2
-                        Console.WriteLine("Opponent chose defence.")
-                    Case 3
-                        Console.WriteLine("Opponent chose heal")
-                End Select
 
                 Select Case opponentChoice
-                    Case 1
+                    Case "a"
+                        Console.WriteLine("Opponent chose attack.")
                         If playerCard.isDefending = False Then
                             playerCard.health -= oppCard.attack
 
@@ -177,9 +186,11 @@ Module Module1
                             playerCard.isDefending = False
                         End If
 
-                    Case 2
+                    Case "d"
+                        Console.WriteLine("Opponent chose defence.")
                         oppCard.isDefending = True
-                    Case 3
+                    Case "h"
+                        Console.WriteLine("Opponent chose heal")
                         If oppCard.health + oppCard.heal > oppCard.health Then
                             oppCard.Health = oppCard.MaxHealth
                         Else
