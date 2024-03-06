@@ -13,7 +13,7 @@ Module Module1
 
 
         Public Overrides Function ToString() As String
-            Return $"{Name}: [{vbNewLine}Health: {Health},{vbNewLine}Attack: {Attack},{vbNewLine}Max Health: {MaxHealth},{vbNewLine}Defence: {Defence},{vbNewLine}isDefending: {isDefending},{vbNewLine}Heal: {Heal}{vbNewLine}]{vbNewLine}"
+            Return $"{Name}: [{vbNewLine}Health: {Health},{vbNewLine}Attack: {Attack},{vbNewLine}Max Health: {MaxHealth},{vbNewLine}Defence: {Defence * 100}%,{vbNewLine}isDefending: {isDefending},{vbNewLine}Heal: {Heal}{vbNewLine}]{vbNewLine}"
         End Function
 
         Sub ShowStats()
@@ -31,7 +31,7 @@ Module Module1
             MaxHealth = 5
             Attack = 2
             isDefending = False
-            Defence = 0.6
+            Defence = 0.3
             Heal = 2
             Name = "Basic Knight"
 
@@ -46,9 +46,9 @@ Module Module1
             Health = 7
             MaxHealth = 7
             Value = 2
-            Attack = 3
+            Attack = 2
             isDefending = False
-            Defence = 0.45
+            Defence = 0.4
             Heal = 3
             Name = "Trained Soldier"
         End Sub
@@ -58,17 +58,19 @@ Module Module1
         Inherits BasePerson
 
         Sub New()
-            Health = 10
-            MaxHealth = 10
+            Health = 9
+            MaxHealth = 9
             Value = 3
-            Attack = 4
+            Attack = 3
             isDefending = False
-            Defence = 0.3
-            Heal = 5
+            Defence = 0.5
+            Heal = 4
             Name = "Legendary Warrior"
         End Sub
 
     End Class
+
+
 
     Class Player
         Public cards As New ArrayList()
@@ -80,6 +82,51 @@ Module Module1
             For Each card In cards
                 rating += card.value
             Next
+        End Sub
+
+        Sub doChoice(ByVal playerCard As Object, ByVal oppCard As Object, ByVal choice As String, Optional isOpponent As Boolean = False)
+            Select Case choice
+                Case "a"
+                    If isOpponent Then
+                        Console.WriteLine("Opponent chose to attack.")
+                    End If
+                    If oppCard.isDefending = False Then
+                        If oppCard.Health - playerCard.attack < 1 Then
+                            oppCard.Health = 0
+
+                        Else
+                            oppCard.Health -= playerCard.attack
+                        End If
+
+                    Else
+
+                        If oppCard.Health - Math.Round(playerCard.attack * (1 - oppCard.Defence)) < 1 Then
+                            oppCard.Health = 0
+                        Else
+                            oppCard.Health -= Math.Round(playerCard.attack * (1 - oppCard.Defence))
+                        End If
+                        oppCard.isDefending = False
+                    End If
+
+
+                Case "d"
+                    If isOpponent Then
+                        Console.WriteLine("Opponent chose to defend.")
+                    End If
+                    playerCard.isDefending = True
+
+
+                Case "h"
+                    If isOpponent Then
+                        Console.WriteLine("Opponent chose to heal.")
+                    End If
+                    If playerCard.Health + playerCard.heal > playerCard.MaxHealth Then
+                        playerCard.Health = playerCard.MaxHealth
+                    Else
+                        playerCard.Health += playerCard.heal
+                    End If
+
+            End Select
         End Sub
 
         Sub fight(ByVal Opp As Opponent)
@@ -115,96 +162,80 @@ Module Module1
             Console.WriteLine()
 
 
-            While Not oppCard.Health <= 0 Or playerCard.Health <= 0
+            While True
                 Console.Write("Player 1, select an action: attack, defend, heal. (a/d/h): ")
                 playerChoice = Console.ReadLine().ToLower
 
-                Select Case playerChoice
-                    Case "a"
-                        If oppCard.isDefending = False Then
-                            oppCard.health -= playerCard.attack
-
-                        Else
-                            oppCard.health -= Math.Floor(playerCard.attack * oppCard.Defence)
-                            oppCard.isDefending = False
-                        End If
-
-
-                    Case "d"
-                        playerCard.isDefending = True
-
-
-                    Case "h"
-                        If playerCard.health + playerCard.heal > playerCard.MaxHealth Then
-                            playerCard.Health = playerCard.MaxHealth
-                        Else
-                            playerCard.health += playerCard.heal
-                        End If
-
-                End Select
+                doChoice(playerCard, oppCard, playerChoice)
 
                 Console.Clear()
-                Console.Write("Opponent: ")
-                oppCard.ShowStats()
+
+
+
                 Console.Write("Player: ")
                 playerCard.ShowStats()
+                Console.Write("Opponent: ")
+                oppCard.ShowStats()
+
 
                 Console.ReadLine()
 
                 opponentOptions.Clear()
 
                 If oppCard.Health > Math.Floor(oppCard.MaxHealth * 0.5) Then
-                    Console.WriteLine("Health is more than half health")
-                    opponentOptions.Add("a")
 
+                    opponentOptions.Add("a")
+                    opponentOptions.Add("a")
+                    If Not oppCard.Health = oppCard.MaxHealth Then
+                        opponentOptions.Add("h")
+                    End If
+                    If oppCard.isDefending = False Then
+                        opponentOptions.Add("d")
+                        opponentOptions.Add("d")
+                    End If
                 Else
                     opponentOptions.Add("h")
-                    Console.WriteLine("Health is less than  half health")
+                    opponentOptions.Add("h")
+                    opponentOptions.Add("a")
+                    If oppCard.isDefending = False Then
+                        opponentOptions.Add("d")
+                        opponentOptions.Add("d")
+                    End If
 
                 End If
-                If oppCard.isDefending = False Then
-                    opponentOptions.Add("d")
-                End If
 
 
+                For Each _option In opponentOptions
+                    Console.Write($"{_option},")
+                Next
+                Console.WriteLine()
                 Randomize()
                 opponentChoice = opponentOptions(CInt(Math.Floor((Rnd() * opponentOptions.Count) + 0)))
 
+                doChoice(oppCard, playerCard, opponentChoice, True)
 
+                If oppCard.Health < 1 Then
+                    Opp.cards.Remove(oppCard)
+                    Exit While
+                End If
 
                 Console.WriteLine()
 
-                Select Case opponentChoice
-                    Case "a"
-                        Console.WriteLine("Opponent chose attack.")
-                        If playerCard.isDefending = False Then
-                            playerCard.health -= oppCard.attack
 
-                        Else
-                            playerCard.health -= Math.Floor(oppCard.attack * oppCard.Defence)
 
-                            playerCard.isDefending = False
-                        End If
+                If playerCard.Health < 1 Then
+                    cards.Remove(playerCard)
+                    Exit While
 
-                    Case "d"
-                        Console.WriteLine("Opponent chose defence.")
-                        oppCard.isDefending = True
-                    Case "h"
-                        Console.WriteLine("Opponent chose heal")
-                        If oppCard.health + oppCard.heal > oppCard.health Then
-                            oppCard.Health = oppCard.MaxHealth
-                        Else
-                            oppCard.health += oppCard.heal
-                        End If
-
-                End Select
+                End If
 
                 Console.ReadLine()
                 Console.Clear()
-                Console.Write("Opponent: ")
-                oppCard.ShowStats()
+
                 Console.Write("Player: ")
                 playerCard.ShowStats()
+                Console.Write("Opponent: ")
+                oppCard.ShowStats()
                 Console.WriteLine()
 
             End While
@@ -230,7 +261,7 @@ Module Module1
 
         Sub addRandomCard(ByVal rating As Integer)
             Dim randomCard As Integer
-            If rating < 6 Then
+            If rating <= 5 Then
                 Randomize()
                 randomCard = CInt(Math.Floor((Rnd() * 5) + 1))
 
@@ -384,12 +415,9 @@ Module Module1
     End Sub
 
 
-    Sub Main()
-        Dim player1 As New Player()
-        Dim Opp1 As New Opponent()
+    Sub tempAskCard(ByVal player As Player)
         Dim cardN As String
 
-        'startMenu()
         Console.Clear()
         Console.BackgroundColor = ConsoleColor.Black
         Console.ForegroundColor = ConsoleColor.White
@@ -397,15 +425,28 @@ Module Module1
         cardN = Console.ReadLine().ToLower
         Select Case cardN
             Case "k"
-                player1.cards.Add(New BasicKnight())
+                player.cards.Add(New BasicKnight())
             Case "s"
-                player1.cards.Add(New TrainedSoldier())
+                player.cards.Add(New TrainedSoldier())
             Case "w"
-                player1.cards.Add(New LegendaryWarrior())
+                player.cards.Add(New LegendaryWarrior())
         End Select
 
+    End Sub
 
-        player1.fight(Opp1)
+    Sub Main()
+        Dim player1 As New Player()
+        Dim Opp1 As New Opponent()
+
+
+        'startMenu()
+
+        For i As Integer = 0 To 1
+            If Not player1.cards.Count > 0 Then
+                tempAskCard(player1)
+            End If
+            player1.fight(Opp1)
+        Next
 
 
         Console.ReadLine()
