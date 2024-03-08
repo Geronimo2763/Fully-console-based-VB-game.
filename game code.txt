@@ -1,5 +1,14 @@
 Module Module1
-
+    Function round(ByVal num As Double) As Integer
+        If num > 0 Then
+            Return Math.Floor(num + 0.5)
+        Else
+            If num = 0 Then
+                Return 0
+            End If
+            Return Math.Floor(num - 0.5)
+        End If
+    End Function
     Class BasePerson
         Public Health As Integer
         Public MaxHealth As Integer
@@ -7,23 +16,34 @@ Module Module1
         Public Defence As Double
         Public Value As Integer
         Public Heal As Integer
-        Public isDefending As Boolean
-
+        Public DefenceBoost As Double
+        Public attackBoost As Integer
+        Public usedPower As Boolean = False
+        Public isDefending As Boolean = False
         Public Name As String
 
+        Public Overridable Sub power(ByVal player As Object, ByVal opp As Object)
+            'Changes on every object
+        End Sub
 
         Public Overrides Function ToString() As String
             Return $"{Name}: [{vbNewLine}Health: {Health},{vbNewLine}Attack: {Attack},{vbNewLine}Max Health: {MaxHealth},{vbNewLine}Defence: {Defence * 100}%,{vbNewLine}isDefending: {isDefending},{vbNewLine}Heal: {Heal}{vbNewLine}]{vbNewLine}"
         End Function
 
-        Sub ShowStats()
-            Console.WriteLine($"{Name}:{vbNewLine}Health-{Health},{vbNewLine}Defending-{isDefending}{vbNewLine}")
+        Sub ShowStats(ByVal opponent As Object)
+            Console.WriteLine($"{Name}:{vbNewLine}Health-{Health},{vbNewLine}Defence-{If(isDefending = True, $"{(Defence + DefenceBoost) * 100}% - {(opponent.attack + opponent.attackBoost) * (1 - (Defence + DefenceBoost))} -- {round((opponent.attack + opponent.attackBoost) * (1 - (Defence + DefenceBoost)))}", "0%")},{vbNewLine}Attack: {Attack + attackBoost}{vbNewLine}")
         End Sub
 
     End Class
 
     Class BasicKnight
         Inherits BasePerson
+
+        Public Overrides Sub power(ByVal player As Object, ByVal opp As Object)
+            isDefending = True
+            DefenceBoost = 0.7
+            attackBoost = 2
+        End Sub
 
         Sub New()
             Health = 5
@@ -42,6 +62,12 @@ Module Module1
     Class TrainedSoldier
         Inherits BasePerson
 
+        Public Overrides Sub power(ByVal player As Object, ByVal opp As Object)
+            isDefending = True
+            DefenceBoost = 0.6
+            attackBoost = 2
+        End Sub
+
         Sub New()
             Health = 7
             MaxHealth = 7
@@ -56,6 +82,12 @@ Module Module1
 
     Class LegendaryWarrior
         Inherits BasePerson
+
+        Public Overrides Sub power(ByVal player As Object, ByVal opp As Object)
+            isDefending = True
+            DefenceBoost = 0.5
+            attackBoost = 2
+        End Sub
 
         Sub New()
             Health = 9
@@ -85,29 +117,42 @@ Module Module1
         End Sub
 
         Sub doChoice(ByVal playerCard As Object, ByVal oppCard As Object, ByVal choice As String, Optional isOpponent As Boolean = False)
+            Dim defendedAttack As Integer
             Select Case choice
                 Case "a"
                     If isOpponent Then
                         Console.WriteLine("Opponent chose to attack.")
                     End If
+
                     If oppCard.isDefending = False Then
-                        If oppCard.Health - playerCard.attack < 1 Then
+                        If oppCard.Health - (playerCard.attack + playerCard.attackBoost) < 1 Then
                             oppCard.Health = 0
 
                         Else
-                            oppCard.Health -= playerCard.attack
+                            oppCard.Health -= (playerCard.attack + playerCard.attackBoost)
                         End If
 
                     Else
+                        defendedAttack = round((playerCard.attack + playerCard.attackBoost) * (1 - (oppCard.Defence + oppCard.DefenceBoost)))
 
-                        If oppCard.Health - Math.Round(playerCard.attack * (1 - oppCard.Defence)) < 1 Then
+                        If Not oppCard.DefenceBoost = 0 Then
+                            oppCard.DefenceBoost = 0
+                        End If
+
+                        Console.WriteLine(defendedAttack)
+
+
+                        If oppCard.Health - defendedAttack < 1 Then
                             oppCard.Health = 0
                         Else
-                            oppCard.Health -= Math.Round(playerCard.attack * (1 - oppCard.Defence))
+                            oppCard.Health -= defendedAttack
                         End If
                         oppCard.isDefending = False
                     End If
 
+                    If Not playerCard.attackBoost = 0 Then
+                        playerCard.attackBoost = 0
+                    End If
 
                 Case "d"
                     If isOpponent Then
@@ -125,7 +170,8 @@ Module Module1
                     Else
                         playerCard.Health += playerCard.heal
                     End If
-
+                Case "p"
+                    playerCard.power(playerCard, oppCard)
             End Select
         End Sub
 
@@ -156,9 +202,9 @@ Module Module1
             Console.Clear()
 
             Console.Write("Player: ")
-            playerCard.ShowStats()
+            playerCard.ShowStats(oppCard)
             Console.Write("Opponent: ")
-            oppCard.ShowStats()
+            oppCard.ShowStats(playerCard)
             Console.WriteLine()
 
 
@@ -173,18 +219,21 @@ Module Module1
 
 
                 Console.Write("Player: ")
-                playerCard.ShowStats()
+                playerCard.ShowStats(oppCard)
                 Console.Write("Opponent: ")
-                oppCard.ShowStats()
+                oppCard.ShowStats(playerCard)
 
 
                 Console.ReadLine()
 
                 opponentOptions.Clear()
 
-                If oppCard.Health > Math.Floor(oppCard.MaxHealth * 0.5) Then
+                If oppCard.Health > Math.Round(oppCard.MaxHealth * 0.5) Then
 
                     opponentOptions.Add("a")
+                    If oppCard.Health > Math.Round(oppCard.MaxHealth * 0.8) Then
+                        opponentOptions.Add("a")
+                    End If
                     opponentOptions.Add("a")
                     If Not oppCard.Health = oppCard.MaxHealth Then
                         opponentOptions.Add("h")
@@ -196,7 +245,11 @@ Module Module1
                 Else
                     opponentOptions.Add("h")
                     opponentOptions.Add("h")
+                    opponentOptions.Add("h")
                     opponentOptions.Add("a")
+                    If oppCard.Health > Math.Round(oppCard.MaxHealth * 0.4) Then
+                        opponentOptions.Add("a")
+                    End If
                     If oppCard.isDefending = False Then
                         opponentOptions.Add("d")
                         opponentOptions.Add("d")
@@ -233,9 +286,9 @@ Module Module1
                 Console.Clear()
 
                 Console.Write("Player: ")
-                playerCard.ShowStats()
+                playerCard.ShowStats(oppCard)
                 Console.Write("Opponent: ")
-                oppCard.ShowStats()
+                oppCard.ShowStats(playerCard)
                 Console.WriteLine()
 
             End While
