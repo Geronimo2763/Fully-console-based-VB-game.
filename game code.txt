@@ -1,5 +1,6 @@
 Imports System.IO
 
+
 Module Module1
     Function round(ByVal num As Double) As Integer
         If num > 0 Then
@@ -125,9 +126,10 @@ Module Module1
 
 
     Class Player
+        Public first As Boolean = True
         Public cards As New ArrayList()
         Public opponentsKilled = 0
-        Public coins As Integer = 10
+        Public coins As Integer = 35
         Public rating As Double = 0
 
 
@@ -456,6 +458,10 @@ Module Module1
 
 
             End While
+
+            If Player.first Then
+                Player.first = False
+            End If
         End Sub
 
 
@@ -475,11 +481,11 @@ Module Module1
     Class Opponent
         Inherits Player
 
-        Sub addRandomCard(ByVal rating As Double)
-            Dim cardOptions As New List(Of Object)
+        Sub addRandomCard(ByVal rating As Double, ByVal player As Player)
+            Dim cardOptions As New ArrayList()
             Dim randomCard As Object
 
-            If rating = 1 Then
+            If player.first Then
                 cards.Add(New BasicKnight())
                 Exit Sub
             End If
@@ -507,7 +513,7 @@ Module Module1
 
                 cardOptions.Add(New LegendaryWarrior())
 
-            ElseIf rating > 8 Then
+            ElseIf rating >= 8 Then
                 cardOptions.Add(New BasicKnight())
 
                 cardOptions.Add(New TrainedSoldier())
@@ -522,6 +528,7 @@ Module Module1
             End If
 
             Randomize()
+
             randomCard = cardOptions(CInt(Math.Floor((Rnd() * cardOptions.Count) + 0)))
             cards.Add(randomCard)
 
@@ -641,10 +648,10 @@ Module Module1
                                                 \___/ /_/ /_/ \__,_/    "
         If selected Then
             button = "                                               -------------------------
-                                              |                      __	|
-                                              |   ___    ____   ____/ /	|
-                                              |  / _ \  / __ \ / __  / 	|
-                                              | /  __/ / / / // /_/ /  	|
+                                              |                      __ |
+                                              |   ___    ____   ____/ / |
+                                              |  / _ \  / __ \ / __  /  |
+                                              | /  __/ / / / // /_/ /   |
                                               | \___/ /_/ /_/ \__,_/    |
                                               |                         |
                                                ------------------------- "
@@ -965,7 +972,7 @@ Module Module1
 
     End Sub
 
-    Sub ExitShopButton(ByVal fg As ConsoleColor, ByVal Selected As Boolean, ByVal cX As Integer, ByVal cY As Integer, Optional ByVal disabled As Boolean = False,Optional ByVal isSelect As Boolean = False)
+    Sub ExitShopButton(ByVal fg As ConsoleColor, ByVal Selected As Boolean, ByVal cX As Integer, ByVal cY As Integer, Optional ByVal disabled As Boolean = False, Optional ByVal isSelect As Boolean = False)
         Dim exitShopButton As String() = {" ------------------------", "| _____          _   _   |", "|| ____| __  __ (_) | |_ |", "||  _|   \ \/ / | | | __||", "|| |___   >  <  | | | |_ |", "||_____| /_/\_\ |_|  \__||", "|                        |", " ------------------------"}
         If Not Selected Then
             exitShopButton = {"", "  _____          _   _   ", " | ____| __  __ (_) | |_ ", " |  _|   \ \/ / | | | __|", " | |___   >  <  | | | |_ ", " |_____| /_/\_\ |_|  \__|"}
@@ -1399,7 +1406,7 @@ Module Module1
             Console.Clear()
 
             showPerson(person, ConsoleColor.White, player, True, currentCardIndex)
-            shopTitle(person, ConsoleColor.DarkYellow,True)
+            shopTitle(person, ConsoleColor.DarkYellow, True)
             showVisualStats(currentCard, currentCard, True)
 
             If yInput = 0 Then
@@ -1586,6 +1593,45 @@ Module Module1
         Console.Clear()
     End Function
 
+    Function showkillshigh(ByVal Player As Player, Optional ByVal high As Boolean = False)
+        Player.updateRating()
+        Dim kills As Integer = Player.opponentsKilled, rating As Integer = Player.rating
+
+        If high Then
+            Dim stats As Object = getRateKills()
+            kills = stats(0)
+            rating = stats(1)
+        End If
+
+        Console.ForegroundColor = ConsoleColor.White
+        If high Then
+            Console.ForegroundColor = ConsoleColor.Cyan
+        End If
+
+        Console.Write("Player rating: ")
+        Console.ForegroundColor = ConsoleColor.Cyan
+        If high Then
+            Console.ForegroundColor = ConsoleColor.DarkGreen
+        End If
+        Console.Write(rating)
+
+        Console.ForegroundColor = ConsoleColor.White
+        If high Then
+            Console.ForegroundColor = ConsoleColor.Cyan
+        End If
+        Console.Write("   Opponents killed: ")
+
+        Console.ForegroundColor = ConsoleColor.Cyan
+        If high Then
+            Console.ForegroundColor = ConsoleColor.DarkGreen
+        End If
+        Console.Write(kills)
+
+        Console.ForegroundColor = ConsoleColor.White
+
+        Return kills.ToString.Length + rating.ToString.Length
+    End Function
+
     Sub showkills(ByVal Player As Player, Optional ByVal high As Boolean = False)
         Player.updateRating()
         Dim kills As Integer = Player.opponentsKilled, rating As Integer = Player.rating
@@ -1629,6 +1675,7 @@ Module Module1
         saveRateKills(player)
         Dim input As String
         Dim inputY As Integer = 0
+        Dim len As Integer = showkillshigh(player, True)
         Const bg As ConsoleColor = ConsoleColor.Black
         Dim fg As ConsoleColor = ConsoleColor.DarkCyan
         Dim buttonGap As Integer = 1
@@ -1642,15 +1689,20 @@ Module Module1
         Console.SetCursorPosition(0, Console.CursorTop - 1)
         showkills(player)
         Console.WriteLine()
-        showkills(player, True)
-        Console.SetCursorPosition(0, Console.CursorTop - 1)
-        Console.ForegroundColor = ConsoleColor.Gray
-        Console.WriteLine("---------------------------High Score |")
 
-        Console.SetCursorPosition(77, Console.CursorTop - 1)
+
         Console.ForegroundColor = ConsoleColor.Gray
-        Console.WriteLine(" |High Score-------------------------------")
-        Console.WriteLine()
+        Console.Write("---------------------------High Score |")
+        showkillshigh(player, True)
+
+        Console.ForegroundColor = ConsoleColor.Gray
+
+        Console.Write(" |High Score")
+        For i As Integer = 0 To 33 - len - 1
+            Console.Write("-")
+        Next
+
+        Console.WriteLine(vbNewLine)
 
         Console.ForegroundColor = ConsoleColor.White
 
@@ -1703,15 +1755,21 @@ Module Module1
             Console.SetCursorPosition(0, Console.CursorTop - 1)
             showkills(player)
             Console.WriteLine()
-            showkills(player, True)
-            Console.SetCursorPosition(0, Console.CursorTop - 1)
-            Console.ForegroundColor = ConsoleColor.Gray
-            Console.WriteLine("---------------------------High Score |")
 
-            Console.SetCursorPosition(77, Console.CursorTop - 1)
+
             Console.ForegroundColor = ConsoleColor.Gray
-            Console.WriteLine(" |High Score-------------------------------")
-            Console.WriteLine()
+            Console.Write("---------------------------High Score |")
+            showkillshigh(player, True)
+
+            Console.ForegroundColor = ConsoleColor.Gray
+
+            Console.Write(" |High Score")
+            For i As Integer = 0 To 33 - len - 1
+                Console.Write("-")
+            Next
+
+            Console.WriteLine(vbNewLine)
+
             Console.ForegroundColor = ConsoleColor.White
 
 
@@ -2797,20 +2855,20 @@ HOW TO PLAY THE GAME
 ------------------------------------------------------------------------------------------------------------------------
 -The player starts with a set amount of coins
 -You can use those coins to purchase 3 types of cards:
-	-The Basic Knight
-		-Has the weakest strength but is the cheapest 
-
-	-The Trained Soldier
-		-Has medium strength and price
-
-	-The Legendary Warrior
-		-Has the highest strength but is the most expensive
-
+                -The Basic Knight
+                                -Has the weakest strength but is the cheapest 
+ 
+                -The Trained Soldier
+                                -Has medium strength and price
+ 
+                -The Legendary Warrior
+                                -Has the highest strength but is the most expensive
+ 
 -The player can purchase one of these cards (if they can afford it) and use it to fight against a computer 
  (in a turn based combat manner) that plays intelligently based on the players and its own stats.
-
+ 
 -As the player kills more opponents, their coins will increase therefore allowing them to buy better, more powerful,
- cards. However, the computer will also get better cards and will play smarter.
+cards. However, the computer will also get better cards and will play smarter.
 ------------------------------------------------------------------------------------------------------------------------
 THE AIM OF THE GAME
 ------------------------------------------------------------------------------------------------------------------------
@@ -2827,9 +2885,9 @@ THE AIM OF THE GAME
         Console.WriteLine("HOW TO FIGHT OPPONENT
 ------------------------------------------------------------------------------------------------------------------------
 READ THE ENTIERITY OF THIS TEXT OR YOU WILL NOT KNOW HOW TO PLAY THIS GAME EFFECTIVLY !!!
-
+ 
 -Each player and opponent card will have 4 main values: defence value percent, attack value, heal value and health.
-
+ 
 -When you fight an opponent, you have to either pick 1 of the 4 options: Attack, Defend, Heal, Power.
 ------------------------------------------------------------------------------------------------------------------------")
         Console.SetCursorPosition(0, 0)
@@ -2838,32 +2896,24 @@ READ THE ENTIERITY OF THIS TEXT OR YOU WILL NOT KNOW HOW TO PLAY THIS GAME EFFEC
         Console.WriteLine("HOW TO FIGHT OPPONENT
 ------------------------------------------------------------------------------------------------------------------------
 -Attack: Attack lets you minus your attack value to the opponent's health. For example, if you are a basic 
- knight fighting an other basic knight, and you chose to attack, you will minus 2 from the opponents 
+ knight fighting another basic knight, and you chose to attack, you will minus 2 from the opponents 
  health as that is your attack value. So, the opponents health will be 3 as 5-2 = 3.
-	
+                
 -Defence: Defence is the value of attack you will negate the next time your opponent chooses attack. So, in our 
  example if you chose defence then then next time the opponent attacks (it can be the move after yours or 
  later) the opponent will deal 1 damage instead of 2. This is because the defence value of your knight is 30% so
- the opponent's attack value(2)- the player's defence value percent multiplied by the opponent's attack value 
- (2*0.3) is the resulting attack value. So a defence value of 30% means (30% of the opponents attack will be 
- gone) 2-(2*0.3) = 1.2 which rounded is 1. So, if you are defending and the opponent attacks you in our example 
- your health will only go down by 1(so you will remain with 4 health).
-
--Heal: Heal is quite simple. You can only use the heal move 5 times in a fight (this is to make fight have an 
- end). When you use heal your health will increase by your heal value. In our example say you have a health of 2
- and you use heal, your health will increase to 4. This is because your heal value(2)+your health(2) = 4.
- NOTE: If you use heal and the heal value added to your health is greater than your max health then the game 
- will reset your health to your max health. For example, if you have a health of 4 and you chose to heal the 
- game will try and do 4+2(which is your heal value) = 6 but since 6>5(your max health) it will revert your 
- health back to 5. After a fight is over you WILL get your 5 heal moves back for the next fight.
-
+ the opponent's attack will get reduced by 30%.
+ 
+-Heal: You can only use the heal move 5 times in a fight. When you use heal your health will increase by your 
+ heal value. In our example say you have a health of 2 and you use heal, your health will increase to 4. This is 
+ because your heal value(2)+your health(2) = 4.
+ 
 -Power: Power is used to boost your 4 main stats for a short period of moves. Firstly, it changes your defence 
  value to 100% until your opponent attacks you (then your defence will revert original). Next, the power move 
- will boost your attack damage by 2 till you attack. So if you have an attack value of 2 it adds 2 = 4 so the 
- next time you attack your opponent its health will be deducted by 4. After you use your 'super' attack your 
- attack value will revert back to your original(2). Finally, if your health is less 50% of your max health, it 
- sets your health back to 50% of your max health. You can only use your power once a fight and after a fight is 
- over you WILL NOT get your power move back for the next fight.")
+ will boost your attack damage by 2 till you attack. After you use your 'super' attack your attack value will 
+ revert back to your original. Finally, it will revert your health back to 50% if you are lower than that.
+ You can only use your power once a fight and after a fight is over you WILL NOT get your power move back 
+ for the next fight.")
         Console.SetCursorPosition(0, 0)
         waitForEnter()
         Console.Clear()
@@ -2872,7 +2922,7 @@ READ THE ENTIERITY OF THIS TEXT OR YOU WILL NOT KNOW HOW TO PLAY THIS GAME EFFEC
 ------------------------------------------------------------------------------------------------------------------------
 -If you lose to an opponent then next time you fight, the opponent’s health and stats will be saved so you can 
  carry on from where you left just with a different card.
-
+ 
 -If you can't remember all this. DON'T PANIC. The defence, attack, health will all be displayed live when you 
  are fighting. This is helpful as you don't have to manually calculate each stat.
 ------------------------------------------------------------------------------------------------------------------------")
@@ -2892,21 +2942,21 @@ ADDITIONAL NOTICES
 CREDITS
 ------------------------------------------------------------------------------------------------------------------------
 -When making the ascii art for this game I used 2 main resources: 
-	-Text To ascii art -- https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20 
-	-General ascii art images -- https://www.asciiart.eu/
+                -Text To ascii art -- https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type%20Something%20 
+                -General ascii art images -- https://www.asciiart.eu/
 ------------------------------------------------------------------------------------------------------------------------
 Development Journey
 ------------------------------------------------------------------------------------------------------------------------
--I made this game single handily in 18 days.
--It took __ hours if you calculate just the working hours. 
+-I made this game single handedly in 18 days.
+-It took 40 hours if you calculate just the working hours. 
+-There are around 3225 lines of code
 -The whole process of the making of this game is documented in my YouTube channel
-	-Timelapse of development -- _
+                -Timelapse of development -- https://www.youtube.com/watch?v=_MffU1I3DO0
 ------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
+ 
+ 
+ 
+ 
 This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
         waitForEnter()
     End Sub
@@ -2928,8 +2978,8 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
             textS += $"{file.ReadByte()},"
         Next
         textS += $"{file.ReadByte()}"
-
         textB = textS.Split(",")
+
         For Each b In textB
             text.Add(Chr(CInt(b)))
         Next
@@ -2945,7 +2995,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
             Buffer.Add(text(i))
         Next
         aBuffer = Buffer.ToArray()
-        stats.Add(CInt(Join(aBuffer)))
+        stats.Add(CInt(Join(aBuffer, "")))
 
         Buffer.Clear()
         For j As Integer = commaIndex + 1 To text.Count - 1
@@ -2953,7 +3003,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
         Next
 
         aBuffer = Buffer.ToArray()
-        stats.Add(CInt(Join(aBuffer)))
+        stats.Add(CInt(Join(aBuffer, "")))
 
 
 
@@ -2965,7 +3015,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
 
         Dim stats As Object = getRateKills()
         Dim file As New FileStream("highscrore.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite)
-        Dim text As String
+        Dim text As String = ""
         Dim rating As Boolean = stats(1) < player.rating
         Dim kills As Boolean = stats(0) < player.opponentsKilled
 
@@ -3099,6 +3149,16 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
         End
     End Sub
 
+    Sub checkEmpty()
+        Dim file As New FileStream("highscrore.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite)
+        If file.Length = 0 Then
+            For Each ch In "0,0"
+                file.WriteByte(CByte(Asc(ch)))
+            Next
+        End If
+        file.close()
+    End Sub
+
     Sub Main()
         Const title As String = "       █     █░ ▄▄▄       ██▀███       ██████  ██▓ ███▄ ▄███▓ █    ██  ██▓    ▄▄▄     ▄▄▄█████▓ ▒█████   ██▀███  
        ▓█░ █ ░█░▒████▄    ▓██ ▒ ██▒   ▒██    ▒ ▓██▒▓██▒▀█▀ ██▒ ██  ▓██▒▓██▒   ▒████▄   ▓  ██▒ ▓▒▒██▒  ██▒▓██ ▒ ██▒
@@ -3114,6 +3174,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
         Dim playerCard As Object
         Dim selectedIndex As Integer
 
+        checkEmpty()
 
         Console.CursorVisible = False
 
@@ -3129,7 +3190,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
 
         player1.updateRating()
         If Opp1.cards.Count < 1 Then
-            Opp1.addRandomCard(player1.rating)
+            Opp1.addRandomCard(player1.rating, player1)
         End If
 
 
@@ -3152,7 +3213,7 @@ This game was Made by Prithiv Jith 8F - Hope you enjoy :)")
 
             player1.updateRating()
             If Opp1.cards.Count < 1 Then
-                Opp1.addRandomCard(player1.rating)
+                Opp1.addRandomCard(player1.rating, player1)
             End If
 
             showOpponent(Opp1)
